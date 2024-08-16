@@ -179,7 +179,7 @@ def print_change_percentage(fare: int = 0):
                 changed += 1
     result = round(changed/total*100, 2)
     if fare == 0:    
-        print(f"Percentage of changed tickets: {result}%")
+        print(f"Podíl změněných jízdenek: {result}%")
     else:
         fare_s = ""
         if fare == 1:
@@ -188,7 +188,7 @@ def print_change_percentage(fare: int = 0):
             fare_s = "standard"
         elif fare == 3:
             fare_s = "relax"
-        print(f"Percentage of changed tickets for fare \"{fare_s}\": {result}%")
+        print(f"Podíl změněných jízdenek tarifu \"{fare_s}\": {result}%")
 
 
 rides = []
