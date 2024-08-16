@@ -169,6 +169,28 @@ def standard_deviation(values: list):
     average_of_sqrd = np.mean(np_values * np_values)
     return np.sqrt(average_of_sqrd - average_sqrd)
 
+def print_change_percentage(fare: int = 0):
+    changed = 0
+    total = 0
+    for ride in rides:
+        if fare == 0 or ride[1] == fare:
+            total += 1
+            if ride[2]:
+                changed += 1
+    result = round(changed/total*100, 2)
+    if fare == 0:    
+        print(f"Percentage of changed tickets: {result}%")
+    else:
+        fare_s = ""
+        if fare == 1:
+            fare_s = "low cost"
+        elif fare == 2:
+            fare_s = "standard"
+        elif fare == 3:
+            fare_s = "relax"
+        print(f"Percentage of changed tickets for fare \"{fare_s}\": {result}%")
+
+
 rides = []
 get_data("stats_V2.txt", rides)
 get_data("stats_V3.txt", rides)
