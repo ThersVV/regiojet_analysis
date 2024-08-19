@@ -190,6 +190,48 @@ def print_change_percentage(fare: int = 0):
             fare_s = "relax"
         print(f"Podíl změněných jízdenek tarifu \"{fare_s}\": {result}%")
 
+def ticket_stats():
+    lowcosts = 0
+    standards = 0
+    relaxs = 0
+    c_lowcosts = 0
+    c_standards = 0
+    c_relaxs = 0
+    for ride in rides:
+        changed = ride[2]
+        ride_type = ride[1]
+        
+        if ride_type == 1:
+            lowcosts += 1
+        elif ride_type == 2:
+            standards += 1
+        else:
+            relaxs += 1
+
+        if changed:
+            if ride_type == 1:
+                c_lowcosts += 1
+            elif ride_type == 2:
+                c_standards += 1
+            else:
+                c_relaxs += 1
+    return (lowcosts, standards, relaxs, c_lowcosts, c_standards, c_relaxs)
+
+def shady_graph():
+    x = [1, 2, 3]
+
+    fig, ax = plt.subplots(figsize=(5.5, 3))
+    ax.legend(handles=[red_patch, green_patch])
+
+    plt.xlabel("Fare")
+    plt.ylabel("Ticket count")
+    plt.xticks([1, 2, 3], ["Low cost", "Standard", "Relax"])
+    plt.xlim(0.5, 4.5)
+    plt.bar(x, ticket_stats()[:3], color="green", log=True)
+    plt.bar(x, ticket_stats()[3:], color="red", log=True)
+
+    plt.show()
+
 
 rides = []
 get_data("stats_V2.txt", rides)
