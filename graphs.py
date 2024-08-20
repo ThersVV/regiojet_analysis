@@ -1,4 +1,9 @@
-from definitions import *
+from matplotlib import pyplot as plt
+import matplotlib.dates as mdates
+import matplotlib.lines as mlines
+
+from data_definitions import *
+from statistics_functions import *
 
 def changes_bargraph():
     x = [1, 2, 3]
@@ -68,18 +73,22 @@ def regio_trend():
 def fare_buy_time():
     x = bought_diffs
     y = [ride[1] for ride in unfiltered_rides]
-    color = '#dfdf00'
+    yellow = '#dfdf00'
+    pink = '#df20df'
+    pink_line = mlines.Line2D([], [], color=pink, label='1800 minutes')
 
-    fig, ax = plt.subplots(figsize=(10, 3))
-    ax.legend(handles=[mpatches.Patch(color=color, label='Ticket bought', alpha=0.5)])
+    _fig, ax = plt.subplots(figsize=(10, 3))
+    ax.legend(handles=[pink_line, mpatches.Patch(color=yellow, label='Ticket bought', alpha=0.5)])
 
     plt.xlabel("Minutes before planned departure")
     plt.ylabel("Ticket fare")
     plt.yticks([1, 2, 3], ["Low cost", "Standard", "Relax"])
     plt.ylim(0.5, 4.5)
-    plt.scatter(x, y, s=155, c=color, alpha=0.4, marker="v")
+    plt.scatter(x, y, s=155, c=yellow, alpha=0.4, marker="v")
     ax.set_xscale("log")
+    plt.axvline(x = 30*60, color=pink, label = '1800 minutes before departure')
     plt.show()
+    print_fare_buy_time_avgs(x, y)
 
 def changes_time(cut=False, log=False):
     x = [change[1] for change in all_changes]
