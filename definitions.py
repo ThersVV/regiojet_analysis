@@ -66,6 +66,25 @@ def get_random_specimen(fraction: float):
             changes_specimen.append(rides[i][2])
     return (fares_specimen, changes_specimen)
 
+def get_phacked_indices():
+    min_p = 1
+    min_i = 0
+    min_j = 0
+    for i in range(0, len(rides)):
+        for j in range(i+130, len(rides)):
+            fares = list(map(lambda r: r[1], rides))[i:j]
+            changes = list(map(lambda r: 0 if r[2] else 1, rides))[i:j]
+
+            result = st.spearmanr(fares, changes)
+            if result.pvalue < min_p:
+                min_p = result.pvalue
+                min_i = i
+                min_j = j
+
+    print(f"p-value: {min_p}")
+    print(f"i: {min_i}")
+    print(f"j: {min_j}")
+
 def proportion_by_month(l: list, starting_month: int = 0):
     fractions = grouped_by_month(l)
     result = [0]
@@ -77,7 +96,7 @@ def proportion_by_month(l: list, starting_month: int = 0):
         result.append(fraction[0]/fraction[1])
     return result
 
-def get_data(filename: str, result: list):
+def get_data(filename: str, result: list, filtered=False):
     rides_dev = {}
     read_file(filename, rides_dev)
 
@@ -86,7 +105,7 @@ def get_data(filename: str, result: list):
 
     split_canceled_tickets(rides_dev)
 
-    format_onto_list(rides_dev, result)
+    format_onto_list(rides_dev, result, filtered)
 
 def split_canceled_tickets(storage: dict):
     storage_cpy = list(storage.items())
@@ -135,17 +154,14 @@ def read_file(filename: str, storage: dict):
 
                         i += 2
 
-def format_onto_list(storage: dict, result: list):
+def format_onto_list(storage: dict, result: list, filtered: bool):
     for (key, value) in storage.items():
-        if value[-1].event_kind == "Cancel" and key[0] - value[-1].event_time > 2*24*60*60:
-            continue
-
         train_time = key[0]
 
         is_changed = any(v.event_kind == "Change" for v in value)
         if not value[0].event_kind.startswith("Bought"):
             # this can happen if someone buys a ticket, cancels it and then 
-            # buys a ticket from somewhere else, but in the same train and 
+            # buys a ticket from somewhere else, but in the same train, and 
             # changes happen. A very rare case... Cant be solved easily though, 
             # because in the "change" email the time specified is from the 
             # "true beginning" station, not from the beginning from the user
@@ -153,10 +169,18 @@ def format_onto_list(storage: dict, result: list):
             continue
         fare = int(value[0].event_kind.split()[1])
         if fare == 0:
-            #sometimes they forget to specify it... only like once or twice
+            #sometimes they forget to specify it... only like once or twice... idk...
             continue
-
-        result.append((datetime.datetime.fromtimestamp(train_time), fare, is_changed))
+        if filtered:        
+            cancelled_soon = value[-1].event_kind == "Cancel" and key[0] - value[-1].event_time > 30*60*60
+            bought_shortly = key[0] - value[0].event_time < 10 or (value[-1].event_kind == "Cancel" and key[0] - value[-1].event_time < 10)
+            if cancelled_soon or bought_shortly:
+                continue
+            result.append((datetime.datetime.fromtimestamp(train_time), fare, is_changed))
+        else:         
+            change_times = [datetime.datetime.fromtimestamp(e.event_time) for e in list(filter(lambda v: v.event_kind == "Change", value))]
+            bought_diff = (train_time - value[0].event_time) / 60.0
+            result.append((datetime.datetime.fromtimestamp(train_time), fare, is_changed, change_times, bought_diff))
         
 def month_range(date1, date2):
     date_range = pd.date_range(date1, date2)
@@ -217,25 +241,31 @@ def ticket_stats():
                 c_relaxs += 1
     return (lowcosts, standards, relaxs, c_lowcosts, c_standards, c_relaxs)
 
-def shady_graph():
-    x = [1, 2, 3]
+def split_changes(rides: list):
+    result = []
+    for ride in rides:
+        for change in ride[3]:
+            result.append((ride[1], (ride[0] - change).total_seconds() / 60.0))
+    return result
 
-    fig, ax = plt.subplots(figsize=(5.5, 3))
-    ax.legend(handles=[red_patch, green_patch])
+def get_unfiltered_rides():
+    rides = []
+    get_data("stats_V2.txt", rides)
+    get_data("stats_V3.txt", rides)
+    all_changes = split_changes(rides)
+    rides = [(entry[0], entry[1], entry[2], entry[4]) for entry in rides]
+    bought_diffs = [ride[3] for ride in rides]
+    return (rides, all_changes, bought_diffs)
 
-    plt.xlabel("Fare")
-    plt.ylabel("Ticket count")
-    plt.xticks([1, 2, 3], ["Low cost", "Standard", "Relax"])
-    plt.xlim(0.5, 4.5)
-    plt.bar(x, ticket_stats()[:3], color="green", log=True)
-    plt.bar(x, ticket_stats()[3:], color="red", log=True)
+def get_filtered_rides():
+    rides = []
+    get_data("stats_V2.txt", rides, True)
+    get_data("stats_V3.txt", rides, True)
+    rides = list(dict.fromkeys(rides)) # remove duplicates
+    return rides
 
-    plt.show()
+unfiltered_rides, all_changes, bought_diffs = get_unfiltered_rides()
+rides = get_filtered_rides()
 
-
-rides = []
-get_data("stats_V2.txt", rides)
-get_data("stats_V3.txt", rides)
-rides = list(dict.fromkeys(rides)) # remove duplicates
-red_patch = mpatches.Patch(color='red', label='Changed tickets')
-green_patch = mpatches.Patch(color='green', label='Unchanged tickets')
+red_patch = mpatches.Patch(color='red', label='Changed tickets', alpha=0.5)
+green_patch = mpatches.Patch(color='green', label='Unchanged tickets', alpha=0.5)
