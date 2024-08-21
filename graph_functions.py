@@ -94,7 +94,7 @@ def changes_time(cut=False, log=False):
     x = [change[1] for change in all_changes]
     y = [change[0] for change in all_changes]
     color = "red"
-
+    print(len(x))
     _fig, ax = plt.subplots(figsize=(10, 3))
     ax.legend(handles=[mpatches.Patch(color=color, label='Emails informing of a change', alpha=0.5)])
 

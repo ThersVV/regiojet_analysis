@@ -143,15 +143,20 @@ def get_unfiltered_rides():
     bought_diffs = [ride[3] for ride in rides]
     return (rides, all_changes, bought_diffs)
 
-def get_filtered_rides():
+def get_filtered_rides(alt: bool = False):
     rides = []
-    get_data("stats_V2.txt", rides, True)
-    get_data("stats_V3.txt", rides, True)
+    if alt:
+        get_data("stats_V2_alt.txt", rides, True)
+        get_data("stats_V3_alt.txt", rides, True)
+    else:
+        get_data("stats_V2.txt", rides, True)
+        get_data("stats_V3.txt", rides, True)
     rides = list(dict.fromkeys(rides)) # remove duplicates
     return rides
 
 unfiltered_rides, all_changes, bought_diffs = get_unfiltered_rides()
 rides = get_filtered_rides()
+rides_alt = get_filtered_rides(alt=True)
 
 red_patch = mpatches.Patch(color='red', label='Changed tickets', alpha=0.5)
 green_patch = mpatches.Patch(color='green', label='Unchanged tickets', alpha=0.5)

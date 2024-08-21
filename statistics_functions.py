@@ -13,7 +13,7 @@ def print_fare_buy_time_avgs(diffs: list, fares: list):
     print(f"Průměrný čas před standard odjezdem: {round(avg_diffs[1][0]/avg_diffs[1][1])}")
     print(f"Průměrný čas před relax odjezdem: {round(avg_diffs[2][0]/avg_diffs[2][1])}")
 
-def print_change_percentage(fare: int = 0):
+def print_change_percentage(rides, fare: int = 0):
     changed = 0
     total = 0
     for ride in rides:
@@ -33,6 +33,7 @@ def print_change_percentage(fare: int = 0):
         elif fare == 3:
             fare_s = "relax"
         print(f"Podíl změněných jízdenek tarifu \"{fare_s}\": {result}%")
+        
 
 def standard_deviation(values: list):
     np_values = np.array(values)
